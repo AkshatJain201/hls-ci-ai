@@ -2,5 +2,3 @@ venv/
 data/
 output/
 metadata/
-/.env
-/.dockerignore
