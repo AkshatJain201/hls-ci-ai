@@ -8,6 +8,7 @@ from langchain_groq import ChatGroq
 from langchain.prompts import PromptTemplate
 from langchain.chains.summarize import load_summarize_chain
 from langchain.text_splitter import RecursiveCharacterTextSplitter
+import uvicorn
 from dotenv import load_dotenv
 from warnings import filterwarnings
 
@@ -233,3 +234,8 @@ async def classify_news_article(request: NewsRequest) -> dict:
         "classification": classification,
         "reasoning": reasoning
     }
+
+
+if __name__ == "__main__":
+    uvicorn.run("api:app", host="0.0.0.0", port=8018, reload=True)
+ 
