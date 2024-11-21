@@ -14,4 +14,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 # EXPOSE 5000
 
 # Set the default command to run your AI script or app
-CMD ["python", "api.py"]
+CMD ["python", "scripts/api.py"]
