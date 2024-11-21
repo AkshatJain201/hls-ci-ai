@@ -58,7 +58,7 @@ common_template = """
             • Post Marketing Results, Long-term Results, Real World Evidence​
             {additional_newsletter_rules}
 
-    Return response strictly as a tuple (either keyword notes or newsletter, its reasoning in 50 words)
+    Return response strictly as a tuple (either keyword 'Notes' or 'Newsletter', its reasoning in 50 words)
     
     Example answer : 
         (Notes, Its a Ph2 new trial drug but since its a BTKI, its an alert), 
@@ -208,7 +208,7 @@ class NewsRequest(BaseModel):
     project_type: str  # Project type (e.g., "Technology", "Healthcare")
 
 # Define the API endpoint
-@app.post("/classify-news/")
+@app.post("/api/classify-news/")
 async def classify_news_article(request: NewsRequest) -> dict:
     """
     API endpoint that classifies the news article and returns classification and reasoning.
