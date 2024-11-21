@@ -14,4 +14,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 EXPOSE 8018
 
 # Set the default command to run your AI script or app
-CMD ["python", "scripts/api.py"]
+CMD ["python", "api.py"]
