@@ -127,7 +127,7 @@ document : '{text}'
 
 final_combine_prompt_template = PromptTemplate(input_variables=['text'], template=final_combine_prompt)
 
-llm = ChatGroq(model = 'llama-3.1-8b-instant', api_key = groq_api_key, seed = 42)
+llm = ChatGroq(model = 'llama-3.1-70b-versatile', api_key = groq_api_key, seed = 42)
 text_splitter = RecursiveCharacterTextSplitter(chunk_size=2000, chunk_overlap=10)
 
 def summarize_document(document):

@@ -22,6 +22,22 @@ def clean_string(input_string, allowed_chars):
     cleaned_string = re.sub(pattern, '', input_string)
     return cleaned_string
 
+
+newasset_template = """
+    You are a pharmacuetical analyst. Go through the following text and idenify if it is a new asset : 
+
+    Rules - 
+
+    Search for indications and MoAs in scope
+    1. Search for  asset names (Alphanumerical or alphabetical) in the articles flagged as included for the project
+    "2. If asset name is found
+    - Match with asset names in asset list. If match is not found, flag as new asset"
+    3. If asset name is not found, search for in scope MoAs in the article. Flag as new asset 
+
+    Text : '{text}'
+    
+"""
+
 common_template = """
     You are a pharmacuetical analyst. Go through the following text from various sources and classify the text into either newsletter or notes. 
 
