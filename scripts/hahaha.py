@@ -15,9 +15,9 @@ load_dotenv()
 
 #output parser
 parser = StrOutputParser()
-groq_api_key = os.getenv('GROQ_API_KEY')
+groq_api_key = os.getenv('GROQ_API_KEY_1')
 # Initialize the ChatGroq model
-model = ChatGroq(model = 'llama-3.1-70b-versatile', api_key = groq_api_key, seed = 42)
+model = ChatGroq(model = 'llama-3.1-8b-instant', api_key = groq_api_key, seed = 42)
 
 
 chunks_prompts = """
@@ -33,7 +33,7 @@ map_prompt_template = PromptTemplate(
 
 final_combine_prompt = """
 Provide a final summary of the entire document with these important points. 
-1. The summary should be atleast 200 words long. 
+1. The summary should be atmost 400 words long. 
 2. Don't make up any details. 
 3. Use bullet points when necessary. 
 4. Avoid any introductory phrases.

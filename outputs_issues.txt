@@ -1,0 +1,2 @@
+output not correctly in scope, verify better.
+return 3 states from classification function notes / newsletter / irrelevant

@@ -17,58 +17,61 @@ load_dotenv()
 groq_api_key = os.getenv('GROQ_API_KEY')
 filterwarnings('ignore')
 
-# Construct the connection string
-# host=os.environ.get("host")
-# port=os.environ.get("port")
-# admin_username=os.environ.get("admin_username") or 'akshat'
-# admin_password=os.environ.get("admin_password") or 'akshat'
-# database_name=os.environ.get("database_name")
-# connection_string = f"mongodb://{urllib.parse.quote_plus(admin_username)}:{urllib.parse.quote_plus(admin_password)}@{host}:{port}/?authSource=admin"
+API_KEYS = [
+    os.getenv("GROQ_API_KEY_1"),
+    os.getenv("GROQ_API_KEY_2"),
+    os.getenv("GROQ_API_KEY_3")
+]
 
-# Connect to MongoDB
-# client = MongoClient(connection_string)
+current_key_index = 0
 
-# Access the specific database with the user credentials
-# db = client[database_name]
+def get_next_api_key():
+    global current_key_index
+    api_key = API_KEYS[current_key_index]
+    current_key_index = (current_key_index + 1) % len(API_KEYS)  # Rotate through the list
+    return api_key
 
 common_template = """
-    You are a pharmacuetical analyst. Go through the following text from various sources and classify the text into either newsletter or notes. 
+    You are a pharmaceutical analyst tasked with reviewing a text and classifying the complete article as either "Notes" worthy, "Newsletter" worthy, or "Irrelevant." Your classification should be based on the following guidelines. Provide a brief (50 words) justification for your classification.
 
-    Rules - 
+    Rules:
 
-    For notes : 
-        1) Newswires / Company PRs
-            • Approval from FDA (Food and Drug Administration), EMA ( European Medicines Agency) or any other drug regulatory authority
-            • Investigational New Drug approval (IND Approval)
-            • Future Plans or timelines
-            • Complete Response Letter (CRLs)
-            • Priority Reviews, other communication from FDA (food and drug Administration)
-            • Clinical Trial results for phase 3 and above
-            • Phase or Dosing Initiation or Completion​ for a drug in phase 3 of clinical trial or above
-            • Collaboration, Mergers and Acquisitions, Licensing agreements
+    **For Notes** (High priority daily alerts):
+        1) Newswires or Company PRs, including:
+            • FDA, EMA, or other drug regulatory authority approvals
+            • IND (Investigational New Drug) approvals
+            • Future plans, timelines, and regulatory communications (e.g., CRLs)
+            • Priority Reviews from regulatory bodies like the FDA
+            • Phase 3 clinical trial results or above
+            • Initiation or completion of Phase 3 trials or above
+            • Collaboration news, mergers, acquisitions, licensing agreements
             • Expansion of manufacturing facilities
-            • Preclinical data demonstrating assets new MOA, supporting neuroprotective nature
-            • Deals on MBA, partnerships, collaborations, spin offs specific to assets
-            • PSPs (Patient Support Programs (PSPs)/patient engagement activities
+            • Preclinical data supporting new mechanisms of action (MOA)
+            • Patient Support Programs (PSPs) or patient engagement initiatives
+            • Deals on partnerships, collaborations, spin-offs relevant to assets
             {additional_notes_rules}
 
-    For newsletter : 
-
-        1) Publications : 
-            • All asset-related clinical trial results irrespective of industry or non-industry
-            • Post Marketing Results, Long-term Results, Real World Evidence​
+    **For Newsletter** (Weekly less time-sensitive updates):
+        1) Publications or research, including:
+            • Asset-related clinical trial results (Industry or non-industry)
+            • Post-marketing or long-term clinical results, real-world evidence
+            • Secondary analyses or cohort studies
+            • Updates on ongoing clinical trials (non-phase 3 or earlier phase data)
             {additional_newsletter_rules}
 
-    Return response strictly as a tuple (either keyword 'Notes' or 'Newsletter', its reasoning in 50 words)
-    
-    Example answer : 
-        (Notes, Its a Ph2 new trial drug but since its a BTKI, its an alert), 
-    
-    Example answer : 
-        (Newsletter, A preclinic product entry)
+    **For Irrelevant**:
+        - If the content does not pertain to the above categories or is not related to Solid Tumor or Multiple Sclerosis, mark it as irrelevant.
+        - Any unrelated therapeutic areas or general news without clinical/regulatory significance should also be considered irrelevant.
 
-    Text : '{text}'
-    
+    Response format: 
+    A tuple: ("Classification", "Reasoning in 50 words")
+
+    Example answers:
+    1. (Notes, FDA granted approval for a Phase 3 drug, high priority for daily alert)
+    2. (Newsletter, Phase 2 trial results published for a new solid tumor therapy)
+    3. (Irrelevant, Discusses general company financials, unrelated to drug approval or clinical results)
+
+    Text: '{text}'
 """
 
 specific_templates = {
@@ -127,13 +130,12 @@ document : '{text}'
 
 final_combine_prompt_template = PromptTemplate(input_variables=['text'], template=final_combine_prompt)
 
-llm = ChatGroq(model = 'llama-3.1-8b-instant', api_key = groq_api_key, seed = 42)
 text_splitter = RecursiveCharacterTextSplitter(chunk_size=2000, chunk_overlap=10)
 
-def summarize_document(document):
+def summarize_document(document, api_key):
     """Generate a summary for the given document."""
     chunks = text_splitter.create_documents([document])
-
+    llm = ChatGroq(model = 'llama-3.1-8b-instant', api_key = api_key, seed = 42)
     chain = load_summarize_chain(
         llm, 
         chain_type = 'map_reduce', 
@@ -167,12 +169,15 @@ def news_classification(text: str, project_name: str) -> Tuple[Optional[str], Op
     text = clean_string(text, allowed_chars)
     text = text.replace('$', 'USD')
     
-    # Summarize the document
-    summary = summarize_document(text)
-    
     # Set up classification
     solution = None
+    key_to_be_used = get_next_api_key()
+
+    summary = summarize_document(text, key_to_be_used)
+
+    llm = ChatGroq(model = 'llama-3.1-8b-instant', api_key = key_to_be_used, seed = 42)
     llm_chain = LLMChain(llm=llm, prompt=classification_prompt_template)  # Assuming `llm` and `classification_prompt_template` are defined elsewhere
+
     
     # Handle classification based on the project_name
     try:
@@ -197,6 +202,8 @@ def news_classification(text: str, project_name: str) -> Tuple[Optional[str], Op
 
         # Extract the classification and reasoning
         output_tuple = tuple(solution['text'].strip("()").split(", ", 1))
+        output_tuple[0].strip('').strip("")
+        output_tuple[1].strip('').strip("")
         return output_tuple
 
     except Exception as e:
