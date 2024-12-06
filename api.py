@@ -11,10 +11,12 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 import uvicorn
 from dotenv import load_dotenv
 from warnings import filterwarnings
+from scripts.compete_durga import in_scope
+from scripts.compete_durga import mark_newasset
 
 app = FastAPI()
 load_dotenv()
-groq_api_key = os.getenv('GROQ_API_KEY')
+# groq_api_key = os.getenv('GROQ_API_KEY')
 filterwarnings('ignore')
 
 API_KEYS = [
@@ -147,7 +149,7 @@ def summarize_document(document, api_key):
     return summary
 
 
-def news_classification(text: str, project_name: str) -> Tuple[Optional[str], Optional[str]]:
+def all_classification(text: str, project_name: str) -> Tuple[Optional[str], Optional[str], Optional[str], Optional[str], Optional[str], Optional[str]]:
     """
     Classifies the news article based on the provided project name.
     
@@ -156,59 +158,92 @@ def news_classification(text: str, project_name: str) -> Tuple[Optional[str], Op
     - project_name (str): The name of the project (e.g., "BMS", "EMD").
     
     Returns:
-    - Tuple (classification, reasoning): A tuple containing classification and reasoning.
-    - If the text is invalid, it returns an error message instead.
+    - Tuple containing:
+        - scope (str): Scope classification
+        - scope_reasoning (str): Reasoning for scope
+        - new_asset (str): New asset classification 
+        - new_asset_reasoning (str): Reasoning for new asset
+        - classification (str): Final classification
+        - classification_reasoning (str): Reasoning for classification
     """
-    
-    # Check for invalid text
-    if pd.isna(text) or not isinstance(text, str) or len(text.strip()) == 0:
-        return None, "Invalid input: The provided text is empty or not a valid string."
-    
-    # Clean and process the text
-    allowed_chars = "&%$()?:"
-    text = clean_string(text, allowed_chars)
-    text = text.replace('$', 'USD')
-    
-    # Set up classification
-    solution = None
-    key_to_be_used = get_next_api_key()
-
-    summary = summarize_document(text, key_to_be_used)
-
-    llm = ChatGroq(model = 'llama-3.1-8b-instant', api_key = key_to_be_used, seed = 42)
-    llm_chain = LLMChain(llm=llm, prompt=classification_prompt_template)  # Assuming `llm` and `classification_prompt_template` are defined elsewhere
-
-    
-    # Handle classification based on the project_name
     try:
-        if project_name == "BMS":
-            solution = llm_chain.invoke({
-                "text": summary,
-                "additional_notes_rules": specific_templates['BMS']['notes_rules'],
-                "additional_newsletter_rules": specific_templates['BMS']['newsletter_rules']
-            })
-        elif project_name == "EMD":
-            solution = llm_chain.invoke({
-                "text": summary,
-                "additional_notes_rules": specific_templates['EMD']['notes_rules'],
-                "additional_newsletter_rules": specific_templates['EMD']['newsletter_rules']
-            })
-        else:
-            solution = llm_chain.invoke({
-                "text": summary,
-                "additional_notes_rules": '',
-                "additional_newsletter_rules": ''
-            })
+        # Check for invalid text
+        if pd.isna(text) or not isinstance(text, str) or len(text.strip()) == 0:
+            return None, "Invalid input: The provided text is empty or not a valid string.", None, None, None, None
+        
+        # Clean and process the text
+        try:
+            allowed_chars = "&%$()?:"
+            text = clean_string(text, allowed_chars)
+            text = text.replace('$', 'USD')
+        except Exception as e:
+            return None, f"Error cleaning text: {str(e)}", None, None, None, None
 
-        # Extract the classification and reasoning
-        output_tuple = tuple(solution['text'].strip("()").split(", ", 1))
-        output_tuple[0].strip('').strip("")
-        output_tuple[1].strip('').strip("")
-        return output_tuple
+        # Get API key and generate summary
+        key_to_be_used = get_next_api_key()
+        try:
+            summary = summarize_document(text, key_to_be_used)
+        except Exception as e:
+            return None, f"Error generating summary: {str(e)}", None, None, None, None
+
+        # Check if in scope
+        try:
+            scope, scope_reasoning = in_scope(text=summary, project_name=project_name, api_key = key_to_be_used)
+            if scope.lower() == "no":
+                return scope, scope_reasoning, '', '', '', ''
+        except Exception as e:
+            return None, f"Error checking scope: {str(e)}", None, None, None, None
+
+        # Check if new asset
+
+        # for now relevant (as in the content that is both "BMS/EMD", thus talking about a strategic or finance )
+        # we are not considering that for new asset detection 
+        
+        try:
+            if scope.lower() != "relevant":
+                new_asset, new_asset_reasoning = mark_newasset(text=summary, project_name=project_name, api_key= key_to_be_used)
+                if new_asset.lower() == 'yes':
+                    return scope, scope_reasoning, new_asset, new_asset_reasoning, "notes", "new asset found"
+        except Exception as e:
+            return None, f"Error checking new asset: {str(e)}", None, None, None, None
+
+        # Set up LLM classification
+        try:
+            llm = ChatGroq(model='llama-3.1-8b-instant', api_key=key_to_be_used, seed=42)
+            llm_chain = LLMChain(llm=llm, prompt=classification_prompt_template)
+
+            # Handle classification based on project_name
+            if project_name == "BMS":
+                solution = llm_chain.invoke({
+                    "text": summary,
+                    "additional_notes_rules": specific_templates['BMS']['notes_rules'],
+                    "additional_newsletter_rules": specific_templates['BMS']['newsletter_rules']
+                })
+            elif project_name == "EMD":
+                solution = llm_chain.invoke({
+                    "text": summary,
+                    "additional_notes_rules": specific_templates['EMD']['notes_rules'],
+                    "additional_newsletter_rules": specific_templates['EMD']['newsletter_rules']
+                })
+            else:
+                solution = llm_chain.invoke({
+                    "text": summary,
+                    "additional_notes_rules": '',
+                    "additional_newsletter_rules": ''
+                })
+
+            # Extract classification and reasoning
+            output_tuple = tuple(solution['text'].strip("()").split(", ", 1))
+            classification = output_tuple[0].strip('').strip('"')
+            reasoning = output_tuple[1].strip('').strip('"')
+            
+            return scope, scope_reasoning, new_asset, new_asset_reasoning, classification, reasoning
+
+        except Exception as e:
+            return None, f"Error in LLM classification: {str(e)}", None, None, None, None
 
     except Exception as e:
-        # In case something goes wrong with classification
-        return None, f"Error during classification: {str(e)}"
+        return None, f"Unexpected error: {str(e)}", None, None, None, None
 
 # Define the input data structure using Pydantic
 class NewsRequest(BaseModel):
@@ -227,20 +262,26 @@ async def classify_news_article(request: NewsRequest) -> dict:
     Returns:
     - JSON object with classification and reasoning or an error message.
     """
-    news_article = request.news_article
-    project_type = request.project_type
-    
-    # Call the classification function
-    classification, reasoning = news_classification(news_article, project_type)
-    
-    if classification is None:
-        # If classification failed or input was invalid, raise an HTTP exception
-        raise HTTPException(status_code=400, detail=reasoning)
-    
-    return {
-        "classification": classification,
-        "reasoning": reasoning
-    }
+    try:
+        news_article = request.news_article
+        project_type = request.project_type
+        
+        # Call the classification function
+        scope, scope_reasoning, new_asset, new_asset_reasoning, classification, classification_reasoning = all_classification(news_article, project_type)
+        
+        if classification is None:
+            raise HTTPException(status_code=400, detail=scope_reasoning)
+        
+        return {
+            "scope": scope,
+            "scope_reasoning": scope_reasoning,
+            "new_asset": new_asset,
+            "new_asset_reasoning": new_asset_reasoning, 
+            "classification": classification,
+            "classification_reasoning": classification_reasoning
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
 
 
 if __name__ == "__main__":
