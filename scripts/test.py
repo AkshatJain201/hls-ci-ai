@@ -167,18 +167,18 @@ def text_classification(file_path) :
     print('done')
     # return df
 
-input_folder = 'data'
-output_folder = 'output'
-for file in os.listdir(input_folder) : 
-    if(os.path.splitext(file)[1] != '.xlsx') : 
-        continue
-    file_path = os.path.join(input_folder, file)
-    # df = pd.read_excel(file_path)
-    # if df['RelevancyFlag'].lower()=='no' : 
-    #     continue
-    # mark_newasset(source, text, asset_list, newasset_rules, project_name):
-        # mark_newasset(df['Category']
-    df = text_classification(file_path)
+# input_folder = 'data'
+# output_folder = 'output'
+# for file in os.listdir(input_folder) : 
+#     if(os.path.splitext(file)[1] != '.xlsx') : 
+#         continue
+#     file_path = os.path.join(input_folder, file)
+#     # df = pd.read_excel(file_path)
+#     # if df['RelevancyFlag'].lower()=='no' : 
+#     #     continue
+#     # mark_newasset(source, text, asset_list, newasset_rules, project_name):
+#         # mark_newasset(df['Category']
+#     df = text_classification(file_path)
     # output_file = os.path.join(output_folder, file)
     # df.to_excel(output_file, index=True)
 

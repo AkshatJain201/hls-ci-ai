@@ -28,7 +28,7 @@ def split_excel_file(input_file, output_folder, output_prefix):
         chunk_df.to_excel(output_file, index=False)
         print(f"Saved: {output_file}")
 
-input_file = './data/06-12-2024.xlsx'
-output_folder = './data'
-split_excel_file(input_file, output_folder, 'output')
+# input_file = './data/06-12-2024.xlsx'
+# output_folder = './data'
+# split_excel_file(input_file, output_folder, 'output')
 

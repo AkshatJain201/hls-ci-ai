@@ -8,7 +8,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 import re
 from dotenv import load_dotenv
 from warnings import filterwarnings
-from hahaha import summarize_document
+# from hahaha import summarize_document
 
 load_dotenv()
 # groq_api_key = os.getenv('GROQ_API_KEY_2')
@@ -354,20 +354,20 @@ def text_classification(file_path):
 
     return df
 
-input_folder = 'data'
-output_folder = 'output'
-values = 0
-for file in os.listdir(input_folder) : 
-    # if file not in ['output_3.xlsx', 'output_10.xlsx'] : 
-    #     continue
-    print(file)
-    if values == 2 : 
-        break
-    if(os.path.splitext(file)[1] != '.xlsx') or (os.path.exists(os.path.join(output_folder, file))): 
-        continue
-    file_path = os.path.join(input_folder, file)
-    df = pd.read_excel(file_path)
-    df = text_classification(file_path)
-    output_file = os.path.join(output_folder, file)
-    df.to_excel(output_file, index=True)
-    values += 1
+# input_folder = 'data'
+# output_folder = 'output'
+# values = 0
+# for file in os.listdir(input_folder) : 
+#     # if file not in ['output_3.xlsx', 'output_10.xlsx'] : 
+#     #     continue
+#     print(file)
+#     if values == 2 : 
+#         break
+#     if(os.path.splitext(file)[1] != '.xlsx') or (os.path.exists(os.path.join(output_folder, file))): 
+#         continue
+#     file_path = os.path.join(input_folder, file)
+#     df = pd.read_excel(file_path)
+#     df = text_classification(file_path)
+#     output_file = os.path.join(output_folder, file)
+#     df.to_excel(output_file, index=True)
+#     values += 1
