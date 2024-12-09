@@ -8,7 +8,8 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 import re
 from dotenv import load_dotenv
 from warnings import filterwarnings
-# from hahaha import summarize_document
+# from summarizer import summarize_document
+
 
 load_dotenv()
 # groq_api_key = os.getenv('GROQ_API_KEY_2')
@@ -371,3 +372,4 @@ def text_classification(file_path):
 #     output_file = os.path.join(output_folder, file)
 #     df.to_excel(output_file, index=True)
 #     values += 1
+

@@ -6,7 +6,7 @@ from langchain_groq import ChatGroq
 from langchain.prompts import PromptTemplate
 from dotenv import load_dotenv
 from warnings import filterwarnings
-from hahaha import summarize_document
+from scripts.summarizer import summarize_document
 filterwarnings('ignore')
 load_dotenv()
 

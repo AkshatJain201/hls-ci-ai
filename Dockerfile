@@ -11,7 +11,7 @@ COPY . /app
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Expose any necessary ports (if your AI service needs it)
-EXPOSE 8018
+EXPOSE 8080
 
 # Set the default command to run your AI script or app
 CMD ["python", "api.py"]

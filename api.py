@@ -14,6 +14,7 @@ from warnings import filterwarnings
 from scripts.compete_durga import in_scope
 from scripts.compete_durga import mark_newasset
 
+
 app = FastAPI()
 load_dotenv()
 # groq_api_key = os.getenv('GROQ_API_KEY')
@@ -285,5 +286,4 @@ async def classify_news_article(request: NewsRequest) -> dict:
 
 
 if __name__ == "__main__":
-    uvicorn.run("api:app", host="0.0.0.0", port=8018, reload=True)
- 
+    uvicorn.run("api:app", host="0.0.0.0", port=8080, reload=True)

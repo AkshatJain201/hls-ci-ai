@@ -44,6 +44,7 @@ final_combine_prompt_template = PromptTemplate(input_variables=['text'], templat
 
 #using Map Reduce
 text_splitter = RecursiveCharacterTextSplitter(chunk_size=2000, chunk_overlap=10)
+
 def summarize_document(document):
     """Generate a summary for the given document."""
     chunks = text_splitter.create_documents([document])
@@ -80,19 +81,3 @@ def summarize_document(document):
 # summaries.append({'document' : 'doc_level_summary', 'summary' : doc_level_summary})
 # with open(os.path.join(metadata_folder, "summaries.json"), "w") as f:
 #     json.dump(summaries, f, indent=4)
-
-# def document_level_summary () : 
-#     json_path = os.path.join(metadata_folder, 'summaries.json')
-#     with open(json_path, 'r') as file : 
-#         summaries = json.load(file)
-    
-#     document = ''
-#     for doc in summaries : 
-#         document += doc['summary']
-#     doc_level_summary = summarize_document(document)
-#     print(doc_level_summary)
-#     summaries.append({'document' : 'doc_level_summary', 'summary' : doc_level_summary})
-#     with open(os.path.join(metadata_folder, "summaries.json"), "w") as f:
-#         json.dump(summaries, f, indent=4)
-
-# document_level_summary()
