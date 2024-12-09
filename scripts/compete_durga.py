@@ -277,83 +277,83 @@ specific_templates = {
                         """, 
     }
 }
-def text_classification(file_path):
-    df = pd.read_excel(file_path)
-    if 'Classification' not in df.columns:
-        df['Classification'] = ''
-    if 'Classification_Reasoning' not in df.columns:
-        df['Classification_Reasoning'] = ''
-    if 'Inscope' not in df.columns:
-        df['Inscope'] = ''
-    if 'Inscope_Reasoning' not in df.columns:
-        df['Inscope_Reasoning'] = ''
-    if 'NewAsset' not in df.columns:
-        df['NewAsset'] = ''
-    if 'NewAsset_Reasoning' not in df.columns:
-        df['NewAsset_Reasoning'] = ''
+# def text_classification(file_path):
+#     df = pd.read_excel(file_path)
+#     if 'Classification' not in df.columns:
+#         df['Classification'] = ''
+#     if 'Classification_Reasoning' not in df.columns:
+#         df['Classification_Reasoning'] = ''
+#     if 'Inscope' not in df.columns:
+#         df['Inscope'] = ''
+#     if 'Inscope_Reasoning' not in df.columns:
+#         df['Inscope_Reasoning'] = ''
+#     if 'NewAsset' not in df.columns:
+#         df['NewAsset'] = ''
+#     if 'NewAsset_Reasoning' not in df.columns:
+#         df['NewAsset_Reasoning'] = ''
     
-    allowed_chars = "&%$()?:"
+#     allowed_chars = "&%$()?:"
     
-    for index, row in df.iterrows():
-        if index%5 == 0 : 
-            print(index)
-        if pd.isna(row['Relevancy Flag']) or row['Relevancy Flag'].lower() == "no":
-            continue
+#     for index, row in df.iterrows():
+#         if index%5 == 0 : 
+#             print(index)
+#         if pd.isna(row['Relevancy Flag']) or row['Relevancy Flag'].lower() == "no":
+#             continue
             
-        text = row['Detailed News']
-        if pd.isna(text):
-            continue
+#         text = row['Detailed News']
+#         if pd.isna(text):
+#             continue
             
-        project_name = row['Project Name']
-        text = clean_string(text, allowed_chars)
-        text = text.replace('$', 'USD')
-        key_to_be_used = get_next_api_key()
-        summary = summarize_document(text)
+#         project_name = row['Project Name']
+#         text = clean_string(text, allowed_chars)
+#         text = text.replace('$', 'USD')
+#         key_to_be_used = get_next_api_key()
+#         # summary = summarize_document(text)
 
-        project_name_detected, project_reasoning = in_scope(text=summary, project_name=project_name, api_key=key_to_be_used)
+#         project_name_detected, project_reasoning = in_scope(text=summary, project_name=project_name, api_key=key_to_be_used)
         
-        # Update inscope columns directly in dataframe
-        df.at[index, "Inscope"] = project_name_detected if project_name_detected.lower() in ['bms', 'emd', 'no'] else "BMS, EMD"
-        df.at[index, "Inscope_Reasoning"] = project_reasoning
+#         # Update inscope columns directly in dataframe
+#         df.at[index, "Inscope"] = project_name_detected if project_name_detected.lower() in ['bms', 'emd', 'no'] else "BMS, EMD"
+#         df.at[index, "Inscope_Reasoning"] = project_reasoning
         
-        if project_name_detected.lower() == "no":
-            continue
+#         if project_name_detected.lower() == "no":
+#             continue
 
-        if project_name_detected.lower() in ['bms', 'emd']:
-            new_asset_indentified, asset_reasoning = mark_newasset(text=summary, project_name=project_name_detected, api_key=key_to_be_used)
-            # Update new asset columns
-            df.at[index, "NewAsset"] = new_asset_indentified
-            df.at[index, "NewAsset_Reasoning"] = asset_reasoning
+#         if project_name_detected.lower() in ['bms', 'emd']:
+#             new_asset_indentified, asset_reasoning = mark_newasset(text=summary, project_name=project_name_detected, api_key=key_to_be_used)
+#             # Update new asset columns
+#             df.at[index, "NewAsset"] = new_asset_indentified
+#             df.at[index, "NewAsset_Reasoning"] = asset_reasoning
             
-            if new_asset_indentified.lower() == "yes":
-                df.at[index, "Classification"] = "Notes"
-                df.at[index, "Classification_Reasoning"] = "New Asset"
-                continue
+#             if new_asset_indentified.lower() == "yes":
+#                 df.at[index, "Classification"] = "Notes"
+#                 df.at[index, "Classification_Reasoning"] = "New Asset"
+#                 continue
 
-        llm = ChatGroq(model='llama-3.1-70b-versatile', api_key=key_to_be_used, seed=42)
-        try:
-            llm_chain = LLMChain(llm=llm, prompt=classification_prompt_template)
+#         llm = ChatGroq(model='llama-3.1-70b-versatile', api_key=key_to_be_used, seed=42)
+#         try:
+#             llm_chain = LLMChain(llm=llm, prompt=classification_prompt_template)
             
-            template_key = project_name if project_name in ["BMS", "EMD"] else None
+#             template_key = project_name if project_name in ["BMS", "EMD"] else None
             
-            solution = llm_chain.invoke({
-                "text": summary,
-                "additional_notes_rules": specific_templates[template_key]['notes_rules'] if template_key else '',
-                "additional_newsletter_rules": specific_templates[template_key]['newsletter_rules'] if template_key else ''
-            })
+#             solution = llm_chain.invoke({
+#                 "text": summary,
+#                 "additional_notes_rules": specific_templates[template_key]['notes_rules'] if template_key else '',
+#                 "additional_newsletter_rules": specific_templates[template_key]['newsletter_rules'] if template_key else ''
+#             })
             
-            # Extract the classification and reasoning
-            output_tuple = tuple(solution['text'].strip("()").split(", ", 1))
+#             # Extract the classification and reasoning
+#             output_tuple = tuple(solution['text'].strip("()").split(", ", 1))
             
-            # Update classification columns
-            df.at[index, 'Classification'] = output_tuple[0]
-            df.at[index, 'Classification_Reasoning'] = output_tuple[1]
+#             # Update classification columns
+#             df.at[index, 'Classification'] = output_tuple[0]
+#             df.at[index, 'Classification_Reasoning'] = output_tuple[1]
 
-        except Exception as e:
-            print(f"Error processing row {index}: {str(e)}")
-            continue
+#         except Exception as e:
+#             print(f"Error processing row {index}: {str(e)}")
+#             continue
 
-    return df
+#     return df
 
 # input_folder = 'data'
 # output_folder = 'output'
